@@ -1,7 +1,8 @@
 import requests
 from bs4 import BeautifulSoup as bs
 from datetime import datetime, timedelta
-
+import os
+from github_funcs import *
 def crawling_favorite_blogs(blog_info_lst):
     """
     주어진 사이트 정보를 사용하여 각 사이트의 첫 페이지를 크롤링하고, 게시글의 발행 시간, 제목, 링크를 추출합니다.
@@ -9,17 +10,18 @@ def crawling_favorite_blogs(blog_info_lst):
 
     매개변수:
     blog_info_lst (list): blog_tuple로 구성된 리스트.
-    blog_tuple (tuple): 블로그 이름과 blog_dict로 구성된 튜플
-    blog_dict (dict): 각 사이트의 구성 정보를 포함하는 사전. 각 키는 블로그의 별칭이며, 값은 다음 정보를 포함하는 사전입니다:
-        - base_url (str): 사이트의 기본 URL.
-        - post_path (str): 게시글이 나열된 페이지의 경로.
-        - detail_page_is_absolute (boolean): 상세 페이지의 경로가 absolute로 연결 되어있는가에 대한 정보
-        - datetime_format (str): 발행 시간의 날짜 형식을 지정하는 문자열.
-        - post_info (list): 게시글 리스트를 가져오기 위한 정보를 포함하는 리스트 [태그, 검색 방법, class/id/name 값].
-        - title_info (list): 게시글 제목을 찾기 위한 정보를 포함하는 리스트 [태그, 검색 방법, class/id/name 값].
-        - link_info (list): 게시글 링크를 찾기 위한 정보를 포함하는 리스트.
-        - publish_info (list): 게시글의 발행 시간 정보를 찾기 위한 리스트.
-        - need_enter_detail_page_for_publish_date (bool): 게시 날짜 정보를 얻기 위해 상세 페이지에 접근해야 하는지 여부.
+    - blog_tuple (tuple): 블로그 이름과 blog_dict로 구성된 튜플
+        - blog_name (str): 각 블로그의 이름(별명)
+        - blog_dict (dict): 각 사이트의 구성 정보를 포함하는 사전. 각 키는 블로그의 별칭이며, 값은 다음 정보를 포함하는 사전입니다:
+            - base_url (str): 사이트의 기본 URL.
+            - post_path (str): 게시글이 나열된 페이지의 경로.
+            - detail_page_is_absolute (boolean): 상세 페이지의 경로가 absolute로 연결 되어있는가에 대한 정보
+            - datetime_format (str): 발행 시간의 날짜 형식을 지정하는 문자열.
+            - post_info (list): 게시글 리스트를 가져오기 위한 정보를 포함하는 리스트 [태그, 검색 방법, class/id/name 값].
+            - title_info (list): 게시글 제목을 찾기 위한 정보를 포함하는 리스트 [태그, 검색 방법, class/id/name 값].
+            - link_info (list): 게시글 링크를 찾기 위한 정보를 포함하는 리스트.
+            - publish_info (list): 게시글의 발행 시간 정보를 찾기 위한 리스트.
+            - need_enter_detail_page_for_publish_date (bool): 게시 날짜 정보를 얻기 위해 상세 페이지에 접근해야 하는지 여부.
 
     반환 값:
     crawling_result_lst (list): 크롤링한 결과 중 각 사이트별로 타겟 날짜인 포스트만 모은 리스트
@@ -79,6 +81,31 @@ def crawling_favorite_blogs(blog_info_lst):
         crawling_result_lst.append((blog_name, result_lst))
     return crawling_result_lst
 
+def publish_git_issue(crawling_result_lst):
+    """
+    매개변수:
+    crawling_result_lst (list): 크롤링한 결과 중 각 사이트별로 타겟 날짜인 포스트만 모은 리스트
+        - crawling_result_tuple (tuple): crawling_result_lst의 요소로 각 사이트의 이름과 각 사이트에서 추출한 정보를 담고 있음
+            - name (str): 블로그 이름
+            - data (list): 타겟 날짜에 맞는 포스트만 모은 정보들 [링크, 제목, 게시 날짜]로 구성
+
+    """
+    GITHUB_TOKEN = os.environ['GITHUBTOKEN']
+    REPO_NAME = "favorite-blog-crawling-template"
+    repo = get_github_repo(GITHUB_TOKEN, REPO_NAME)
+    total_new_post_blogs = 0
+    body = "| 블로그 이름 | 제목 | 게시날짜 |\n" + "| - | - | - |\n"
+    for blog_name, blog_posts in crawling_result_lst:
+        if len(blog_posts) > 0:
+            total_new_post_blogs += 1
+            for post in blog_posts:
+                body += f"| {blog_name} | {post[1]}({post[0]}) | {post[2]} |\n"
+    
+    if total_new_post_blogs > 0:
+        title = f"{total_new_post_blogs}개의 블로그에서 새로운 포스트가 게시되었습니다."
+        upload_github_issue(repo, title, body)
+
+
 
 
 if __name__ == "__main__":
@@ -106,4 +133,5 @@ if __name__ == "__main__":
             "need_enter_detail_page_for_publish_date": True
         }),
     ]
-    ret = crawling_favorite_blogs(blog_infos)
+    crawling_result_lst = crawling_favorite_blogs(blog_infos)
+    publish_git_issue(crawling_result_lst)
