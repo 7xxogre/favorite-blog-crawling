@@ -62,7 +62,7 @@ def crawling_favorite_blogs(blog_info_lst):
             else:
                 link = post.find(link_info[0], attrs={link_info[1]:link_info[2]}).get("href")
 
-            if not blog_dict["detail_page_is_absolute"]:
+            if blog_dict["detail_page_is_absolute"] is not None and not blog_dict["detail_page_is_absolute"]:
                 link = blog_dict["base_url"] + link
 
             title = post.find(title_info[0], attrs={title_info[1]:title_info[2]}).get_text()
@@ -99,7 +99,7 @@ def publish_git_issue(crawling_result_lst):
         if len(blog_posts) > 0:
             total_new_post_blogs += 1
             for post in blog_posts:
-                body += f"| {blog_name} | {post[1]}({post[0]}) | {post[2]} |\n"
+                body += f"| {blog_name} | [{post[1]}]({post[0]}) | {post[2]} |\n"
     
     if total_new_post_blogs > 0:
         title = f"{total_new_post_blogs}개의 블로그에서 새로운 포스트가 게시되었습니다."
