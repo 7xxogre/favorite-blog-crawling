@@ -1,11 +1,11 @@
 import requests
 from bs4 import BeautifulSoup as bs
-from datetime import datetime
-
+from datetime import datetime, timedelta
 
 def crawling_favorite_blogs(blog_info_lst):
     """
     주어진 사이트 정보를 사용하여 각 사이트의 첫 페이지를 크롤링하고, 게시글의 발행 시간, 제목, 링크를 추출합니다.
+    그 후 어제 날짜와 비교해 어제 날짜인 글만 추출합니다. (매일 00시에 이 프로그램을 Github Action으로 돌릴 예정)
 
     매개변수:
     blog_info_lst (list): blog_tuple로 구성된 리스트.
@@ -40,6 +40,8 @@ def crawling_favorite_blogs(blog_info_lst):
     crawling_favorite_blogs(blog_dict_list)
     """
     ret_lst = []
+    today = datetime.now().date() - timedelta(days=1)
+    
     for blog_name, blog_dict in blog_info_lst:
         soup = bs(requests.get(blog_dict["base_url"] + blog_dict["post_path"]).text, "html.parser")
         posts_info = blog_dict["posts_info"]
@@ -63,24 +65,16 @@ def crawling_favorite_blogs(blog_info_lst):
             if blog_dict["need_enter_detail_page_for_publish_date"]:
                 detail_soup = bs(requests.get(link).text, "html.parser")
                 publish_date_str = detail_soup.find(publish_info[0], attrs={publish_info[1]:publish_info[2]}).get_text()
-                
             else:
                 publish_date_str = post.find(publish_info[0], attrs={publish_info[1]:publish_info[2]}).get_text()
 
             publish_date = datetime.strptime(publish_date_str, blog_dict["datetime_format"])
-            result_lst.append((link, title, publish_date))
+            if today == publish_date.date():
+                result_lst.append((link, title, publish_date))
+            
         print(result_lst)
         ret_lst.append((blog_name, result_lst))
-        
     return ret_lst
-
-
-
-
-
-
-
-
 
 
 
