@@ -91,7 +91,7 @@ def publish_git_issue(crawling_result_lst):
 
     """
     GITHUB_TOKEN = os.environ['GITHUBTOKEN']
-    REPO_NAME = "favorite-blog-crawling-template"
+    REPO_NAME = "favorite-blog-crawling"
     repo = get_github_repo(GITHUB_TOKEN, REPO_NAME)
     total_new_post_blogs = 0
     body = "| 블로그 이름 | 제목 | 게시날짜 |\n" + "| - | - | - |\n"
