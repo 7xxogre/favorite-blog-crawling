@@ -1,11 +1,11 @@
 import requests
 from bs4 import BeautifulSoup as bs
-from datetime import datetime
-
+from datetime import datetime, timedelta
 
 def crawling_favorite_blogs(blog_info_lst):
     """
     주어진 사이트 정보를 사용하여 각 사이트의 첫 페이지를 크롤링하고, 게시글의 발행 시간, 제목, 링크를 추출합니다.
+    그 후 어제 날짜와 비교해 어제 날짜인 글만 추출합니다. (매일 00시에 이 프로그램을 Github Action으로 돌릴 예정)
 
     매개변수:
     blog_info_lst (list): blog_tuple로 구성된 리스트.
@@ -22,7 +22,11 @@ def crawling_favorite_blogs(blog_info_lst):
         - need_enter_detail_page_for_publish_date (bool): 게시 날짜 정보를 얻기 위해 상세 페이지에 접근해야 하는지 여부.
 
     반환 값:
-    None
+    crawling_result_lst (list): 크롤링한 결과 중 각 사이트별로 타겟 날짜인 포스트만 모은 리스트
+        - crawling_result_tuple (tuple): crawling_result_lst의 요소로 각 사이트의 이름과 각 사이트에서 추출한 정보를 담고 있음
+            - name (str): 블로그 이름
+            - data (list): 타겟 날짜에 맞는 포스트만 모은 정보들 [링크, 제목, 게시 날짜]로 구성
+
 
     예제:
     blog_info = ("example_blog", {
@@ -39,7 +43,9 @@ def crawling_favorite_blogs(blog_info_lst):
     blog_dict_list = [blog_info]
     crawling_favorite_blogs(blog_dict_list)
     """
-    ret_lst = []
+    crawling_result_lst = []
+    today = datetime.now().date() - timedelta(days=1)
+    
     for blog_name, blog_dict in blog_info_lst:
         soup = bs(requests.get(blog_dict["base_url"] + blog_dict["post_path"]).text, "html.parser")
         posts_info = blog_dict["posts_info"]
@@ -63,24 +69,15 @@ def crawling_favorite_blogs(blog_info_lst):
             if blog_dict["need_enter_detail_page_for_publish_date"]:
                 detail_soup = bs(requests.get(link).text, "html.parser")
                 publish_date_str = detail_soup.find(publish_info[0], attrs={publish_info[1]:publish_info[2]}).get_text()
-                
             else:
                 publish_date_str = post.find(publish_info[0], attrs={publish_info[1]:publish_info[2]}).get_text()
 
             publish_date = datetime.strptime(publish_date_str, blog_dict["datetime_format"])
-            result_lst.append((link, title, publish_date))
-        print(result_lst)
-        ret_lst.append((blog_name, result_lst))
-        
-    return ret_lst
-
-
-
-
-
-
-
-
+            if today == publish_date.date():
+                result_lst.append((link, title, publish_date))
+            
+        crawling_result_lst.append((blog_name, result_lst))
+    return crawling_result_lst
 
 
 
@@ -109,4 +106,4 @@ if __name__ == "__main__":
             "need_enter_detail_page_for_publish_date": True
         }),
     ]
-    crawling_favorite_blogs(blog_infos)
+    ret = crawling_favorite_blogs(blog_infos)
