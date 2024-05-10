@@ -90,7 +90,7 @@ def publish_git_issue(crawling_result_lst):
             - data (list): 타겟 날짜에 맞는 포스트만 모은 정보들 [링크, 제목, 게시 날짜]로 구성
 
     """
-    GITHUB_TOKEN = os.environ['GITHUBTOKEN']
+    GITHUB_TOKEN = os.environ['GITHUB_TOKEN']
     REPO_NAME = "favorite-blog-crawling"
     repo = get_github_repo(GITHUB_TOKEN, REPO_NAME)
     total_new_post_blogs = 0
