@@ -1,6 +1,9 @@
 name: 매일 블로그 포스트 확인하기
 
 on:
+  push:
+    branches:
+      - main
   schedule:
     - cron: "0 0 * * *"
     
