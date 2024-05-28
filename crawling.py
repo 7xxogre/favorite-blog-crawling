@@ -48,7 +48,7 @@ def crawling_favorite_blogs(blog_info_lst):
     """
     crawling_result_lst = []
     today = datetime.now().date() - timedelta(days=1)
-
+    
     for blog_name, blog_dict in blog_info_lst:
         soup = bs(requests.get(blog_dict["base_url"] + blog_dict["post_path"]).text, "html.parser")
         posts_info = blog_dict["posts_info"]
@@ -142,6 +142,17 @@ if __name__ == "__main__":
             "publish_info": ["span", "class", "date"],
             "need_enter_detail_page_for_publish_date": True
         }),
+        ("kciter", {
+            "base_url": "https://kciter.so",
+            "post_path": "",
+            "detail_page_is_absolute": False,
+            "datetime_format": "%Y-%m-%d",
+            "posts_info": ["a", "class", "css-zhckuc e349bdu1"],
+            "title_info": ["div", None, None],
+            "link_info": [None, None, None],
+            "publish_info": ["small", None, None],
+            "need_enter_detail_page_for_publish_date": False
+        })
     ]
     crawling_result_lst = crawling_favorite_blogs(blog_infos)
     publish_git_issue(crawling_result_lst)
