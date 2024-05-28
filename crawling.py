@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup as bs
 from datetime import datetime, timedelta
 import os
 from github_funcs import *
+
 def crawling_favorite_blogs(blog_info_lst):
     """
     주어진 사이트 정보를 사용하여 각 사이트의 첫 페이지를 크롤링하고, 게시글의 발행 시간, 제목, 링크를 추출합니다.
@@ -47,7 +48,7 @@ def crawling_favorite_blogs(blog_info_lst):
     """
     crawling_result_lst = []
     today = datetime.now().date() - timedelta(days=1)
-    
+
     for blog_name, blog_dict in blog_info_lst:
         soup = bs(requests.get(blog_dict["base_url"] + blog_dict["post_path"]).text, "html.parser")
         posts_info = blog_dict["posts_info"]
@@ -57,7 +58,10 @@ def crawling_favorite_blogs(blog_info_lst):
         posts = soup.find_all(posts_info[0], attrs={posts_info[1]:posts_info[2]})
         result_lst = []
         for post in posts:
-            if link_info[1] == None:
+            if link_info[0] == None:
+                # 리스트 자체가 a 태그인 경우...
+                link = post.get("href")
+            elif link_info[1] == None:
                 link = post.find('a').get("href")
             else:
                 link = post.find(link_info[0], attrs={link_info[1]:link_info[2]}).get("href")
@@ -65,14 +69,20 @@ def crawling_favorite_blogs(blog_info_lst):
             if blog_dict["detail_page_is_absolute"] is not None and not blog_dict["detail_page_is_absolute"]:
                 link = blog_dict["base_url"] + link
 
-            title = post.find(title_info[0], attrs={title_info[1]:title_info[2]}).get_text()
+            if title_info[1] == None:
+                title = post.find(title_info[0]).get_text()
+            else:
+                title = post.find(title_info[0], attrs={title_info[1]:title_info[2]}).get_text()
 
 
             if blog_dict["need_enter_detail_page_for_publish_date"]:
                 detail_soup = bs(requests.get(link).text, "html.parser")
                 publish_date_str = detail_soup.find(publish_info[0], attrs={publish_info[1]:publish_info[2]}).get_text()
             else:
-                publish_date_str = post.find(publish_info[0], attrs={publish_info[1]:publish_info[2]}).get_text()
+                if publish_info[1] == None:
+                    publish_date_str = post.find(publish_info[0]).get_text()
+                else:
+                    publish_date_str = post.find(publish_info[0], attrs={publish_info[1]:publish_info[2]}).get_text()
 
             publish_date = datetime.strptime(publish_date_str, blog_dict["datetime_format"])
             if today == publish_date.date():
