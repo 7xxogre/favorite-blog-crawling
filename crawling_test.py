@@ -38,7 +38,18 @@ if __name__ == "__main__":
             "link_info": [None, None, None],
             "publish_info": ["small", None, None],
             "need_enter_detail_page_for_publish_date": False
+        }),
+        ("parksb", {
+            "base_url": "https://parksb.github.io/",
+            "post_path": "articles.html",
+            "detail_page_is_absolute": False,
+            "datetime_format": "%Y.%m.%d",
+            "posts_info": ["li", None, None],
+            "title_info": ["span", "class", "heading"],
+            "link_info": ["a", None, None],
+            "publish_info": ["time", None, None],
+            "need_enter_detail_page_for_publish_date": False
         })
     ]
-    crawling_result_lst = crawling_favorite_blogs(blog_infos, datetime(2024, 5, 17).date())
+    crawling_result_lst = crawling_favorite_blogs(blog_infos, datetime(2024, 1, 23).date())
     print(crawling_result_lst)
