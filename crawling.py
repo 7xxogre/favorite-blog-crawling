@@ -58,35 +58,38 @@ def crawling_favorite_blogs(blog_info_lst):
         posts = soup.find_all(posts_info[0], attrs={posts_info[1]:posts_info[2]})
         result_lst = []
         for post in posts:
-            if link_info[0] == None:
-                # 리스트 자체가 a 태그인 경우...
-                link = post.get("href")
-            elif link_info[1] == None:
-                link = post.find('a').get("href")
-            else:
-                link = post.find(link_info[0], attrs={link_info[1]:link_info[2]}).get("href")
-
-            if blog_dict["detail_page_is_absolute"] is not None and not blog_dict["detail_page_is_absolute"]:
-                link = blog_dict["base_url"] + link
-
-            if title_info[1] == None:
-                title = post.find(title_info[0]).get_text()
-            else:
-                title = post.find(title_info[0], attrs={title_info[1]:title_info[2]}).get_text()
-
-
-            if blog_dict["need_enter_detail_page_for_publish_date"]:
-                detail_soup = bs(requests.get(link).text, "html.parser")
-                publish_date_str = detail_soup.find(publish_info[0], attrs={publish_info[1]:publish_info[2]}).get_text()
-            else:
-                if publish_info[1] == None:
-                    publish_date_str = post.find(publish_info[0]).get_text()
+            try:
+                if link_info[0] == None:
+                    # 리스트 자체가 a 태그인 경우...
+                    link = post.get("href")
+                elif link_info[1] == None:
+                    link = post.find('a').get("href")
                 else:
-                    publish_date_str = post.find(publish_info[0], attrs={publish_info[1]:publish_info[2]}).get_text()
+                    link = post.find(link_info[0], attrs={link_info[1]:link_info[2]}).get("href")
 
-            publish_date = datetime.strptime(publish_date_str, blog_dict["datetime_format"])
-            if today == publish_date.date():
-                result_lst.append((link, title, publish_date))
+                if blog_dict["detail_page_is_absolute"] is not None and not blog_dict["detail_page_is_absolute"]:
+                    link = blog_dict["base_url"] + link
+
+                if title_info[1] == None:
+                    title = post.find(title_info[0]).get_text()
+                else:
+                    title = post.find(title_info[0], attrs={title_info[1]:title_info[2]}).get_text()
+
+
+                if blog_dict["need_enter_detail_page_for_publish_date"]:
+                    detail_soup = bs(requests.get(link).text, "html.parser")
+                    publish_date_str = detail_soup.find(publish_info[0], attrs={publish_info[1]:publish_info[2]}).get_text()
+                else:
+                    if publish_info[1] == None:
+                        publish_date_str = post.find(publish_info[0]).get_text()
+                    else:
+                        publish_date_str = post.find(publish_info[0], attrs={publish_info[1]:publish_info[2]}).get_text()
+
+                publish_date = datetime.strptime(publish_date_str, blog_dict["datetime_format"])
+                if today == publish_date.date():
+                    result_lst.append((link, title, publish_date))
+            except:
+                pass
             
         crawling_result_lst.append((blog_name, result_lst))
     return crawling_result_lst
@@ -151,6 +154,17 @@ if __name__ == "__main__":
             "title_info": ["div", None, None],
             "link_info": [None, None, None],
             "publish_info": ["small", None, None],
+            "need_enter_detail_page_for_publish_date": False
+        }),
+        ("parksb", {
+            "base_url": "https://parksb.github.io/",
+            "post_path": "articles.html",
+            "detail_page_is_absolute": False,
+            "datetime_format": "%Y.%m.%d",
+            "posts_info": ["li", None, None],
+            "title_info": ["span", "class", "heading"],
+            "link_info": ["a", None, None],
+            "publish_info": ["time", None, None],
             "need_enter_detail_page_for_publish_date": False
         })
     ]
