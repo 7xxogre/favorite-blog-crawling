@@ -4,31 +4,46 @@ from datetime import datetime, timedelta
 import os
 from github_funcs import *
 
-def crawling_favorite_blogs(blog_info_lst):
+def crawling_favorite_blogs(blog_info_lst, 
+                            today = datetime.now().date() - timedelta(days=1)):
     """
-    주어진 사이트 정보를 사용하여 각 사이트의 첫 페이지를 크롤링하고, 게시글의 발행 시간, 제목, 링크를 추출합니다.
-    그 후 어제 날짜와 비교해 어제 날짜인 글만 추출합니다. (매일 00시에 이 프로그램을 Github Action으로 돌릴 예정)
+    주어진 사이트 정보를 사용하여 각 사이트의 첫 페이지를 크롤링하고, 
+    게시글의 발행 시간, 제목, 링크를 추출합니다.
+    그 후 어제 날짜와 비교해 어제 날짜인 글만 추출합니다. 
+    (매일 00시에 이 프로그램을 Github Action으로 돌릴 예정)
 
     매개변수:
     blog_info_lst (list): blog_tuple로 구성된 리스트.
     - blog_tuple (tuple): 블로그 이름과 blog_dict로 구성된 튜플
         - blog_name (str): 각 블로그의 이름(별명)
-        - blog_dict (dict): 각 사이트의 구성 정보를 포함하는 사전. 각 키는 블로그의 별칭이며, 값은 다음 정보를 포함하는 사전입니다:
+        - blog_dict (dict): 각 사이트의 구성 정보를 포함하는 사전. 
+                            각 키는 블로그의 별칭이며, 
+                            값은 다음 정보를 포함하는 사전입니다:
             - base_url (str): 사이트의 기본 URL.
             - post_path (str): 게시글이 나열된 페이지의 경로.
-            - detail_page_is_absolute (boolean): 상세 페이지의 경로가 absolute로 연결 되어있는가에 대한 정보
+            - detail_page_is_absolute (boolean): 상세 페이지의 경로가 absolute로 
+                                                연결 되어있는가에 대한 정보
             - datetime_format (str): 발행 시간의 날짜 형식을 지정하는 문자열.
-            - post_info (list): 게시글 리스트를 가져오기 위한 정보를 포함하는 리스트 [태그, 검색 방법, class/id/name 값].
-            - title_info (list): 게시글 제목을 찾기 위한 정보를 포함하는 리스트 [태그, 검색 방법, class/id/name 값].
+            - post_info (list): 게시글 리스트를 가져오기 위한 정보를 포함하는 리스트
+                                [태그, 검색 방법, class/id/name 값].
+            - title_info (list): 게시글 제목을 찾기 위한 정보를 포함하는 리스트 
+                                [태그, 검색 방법, class/id/name 값].
             - link_info (list): 게시글 링크를 찾기 위한 정보를 포함하는 리스트.
             - publish_info (list): 게시글의 발행 시간 정보를 찾기 위한 리스트.
-            - need_enter_detail_page_for_publish_date (bool): 게시 날짜 정보를 얻기 위해 상세 페이지에 접근해야 하는지 여부.
+            - need_enter_detail_page_for_publish_date (bool): 
+                    게시 날짜 정보를 얻기 위해 상세 페이지에 접근해야 하는지 여부.
+
+    today (datetime): 수집할 날짜를 지정하는 변수. 기본적으로 비워두지만, test시에는 
+                    특정 날짜의 데이터를 가져올 수 있는지 체크 용도로 사용
 
     반환 값:
-    crawling_result_lst (list): 크롤링한 결과 중 각 사이트별로 타겟 날짜인 포스트만 모은 리스트
-        - crawling_result_tuple (tuple): crawling_result_lst의 요소로 각 사이트의 이름과 각 사이트에서 추출한 정보를 담고 있음
+    crawling_result_lst (list): 크롤링 결과 중 타겟 날짜에 작성된 글 리스트
+        - crawling_result_tuple (tuple): crawling_result_lst의 요소로 
+                                        각 사이트의 이름과 각 사이트에서 추출한 
+                                        정보를 담고 있음
             - name (str): 블로그 이름
-            - data (list): 타겟 날짜에 맞는 포스트만 모은 정보들 [링크, 제목, 게시 날짜]로 구성
+            - data (list): 타겟 날짜에 맞는 포스트만 모은 정보들 
+                            [링크, 제목, 게시 날짜]로 구성
 
 
     예제:
@@ -47,7 +62,6 @@ def crawling_favorite_blogs(blog_info_lst):
     crawling_favorite_blogs(blog_dict_list)
     """
     crawling_result_lst = []
-    today = datetime.now().date() - timedelta(days=1)
     
     for blog_name, blog_dict in blog_info_lst:
         soup = bs(requests.get(blog_dict["base_url"] + blog_dict["post_path"]).text, "html.parser")
